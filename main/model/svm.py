@@ -1,0 +1,115 @@
+# -*- coding: utf-8 -*-
+
+# @Time  : 2020/1/14 下午8:04
+# @Author : fl
+# @Project : HaierDataMining
+# @FileName: lstm
+
+import numpy as np
+
+import tensorflow as tf
+import tensorflow.nn.rnn_cell as rnn
+
+from haier_data_mining.model.model import Model
+from haier_data_mining.utils.model_utils import one_hot
+
+
+class LRModel(Model):
+    def __init__(self, config, seed, lr):
+        super(LRModel, self).__init__(config=config, seed=seed, lr=lr)
+
+    def create_model(self):
+        features = tf.placeholder(dtype=tf.float32, shape=[None, self.config.n_dimension], name='features')
+        labels = tf.placeholder(dtype=tf.float32, shape=[None, self.config.n_label], name='labels')
+        # Create variables for svm
+        b = tf.Variable(tf.random_normal(shape=[1, self.config.batch_size]))
+        # Gaussian (RBF) kernel
+        # 该核函数用矩阵操作来表示
+        # 在sq_dists中应用广播加法和减法操作
+        # 线性核函数可以表示为：my_kernel=tf.matmul（x_data，tf.transpose（x_data）。
+        gamma = tf.constant(-50.0)
+        dist = tf.reduce_sum(tf.square(features), 1)
+        dist = tf.reshape(dist, [-1, 1])
+        sq_dists = tf.add(tf.subtract(dist, tf.multiply(2., tf.matmul(features, tf.transpose(features)))),
+                          tf.transpose(dist))
+        my_kernel = tf.exp(tf.multiply(gamma, tf.abs(sq_dists)))
+
+        # 对偶问题。为了最大化，这里采用最小化损失函数的负数tf.negative
+        first_term = tf.reduce_sum(b)
+        b_vec_cross = tf.matmul(tf.transpose(b), b)
+        y_target_cross = tf.matmul(labels, tf.transpose(labels))
+        second_term = tf.reduce_sum(tf.multiply(my_kernel, tf.multiply(b_vec_cross, y_target_cross)))
+        loss = tf.negative(tf.subtract(first_term, second_term))
+
+        hidden1 = tf.layers.dense(inputs=features, units=self.config.n_label)
+        pred = tf.nn.softmax(hidden1)
+        # 交叉熵损失函数
+        loss = tf.reduce_mean(
+            tf.nn.softmax_cross_entropy_with_logits_v2(logits=pred, labels=labels))
+        train_op = self.optimizer.minimize(
+            loss=loss,
+            global_step=tf.train.get_global_step())
+        predictions = tf.argmax(pred, 1)
+        actuals = tf.argmax(labels, 1)
+
+        ones_like_actuals = tf.ones_like(actuals)
+        zeros_like_actuals = tf.zeros_like(actuals)
+        ones_like_predictions = tf.ones_like(predictions)
+        zeros_like_predictions = tf.zeros_like(predictions)
+
+        tp_op = tf.reduce_sum(
+            tf.cast(
+                tf.logical_and(
+                    tf.equal(actuals, ones_like_actuals),
+                    tf.equal(predictions, ones_like_predictions)
+                ),
+                "float"
+            )
+        )
+
+        tn_op = tf.reduce_sum(
+            tf.cast(
+                tf.logical_and(
+                    tf.equal(actuals, zeros_like_actuals),
+                    tf.equal(predictions, zeros_like_predictions)
+                ),
+                "float"
+            )
+        )
+
+        fp_op = tf.reduce_sum(
+            tf.cast(
+                tf.logical_and(
+                    tf.equal(actuals, zeros_like_actuals),
+                    tf.equal(predictions, ones_like_predictions)
+                ),
+                "float"
+            )
+        )
+
+        fn_op = tf.reduce_sum(
+            tf.cast(
+                tf.logical_and(
+                    tf.equal(actuals, ones_like_actuals),
+                    tf.equal(predictions, zeros_like_predictions)
+                ),
+                "float"
+            )
+        )
+
+        correct_pred = tf.equal(predictions, actuals)
+        eval_metric_ops = tf.count_nonzero(correct_pred)
+
+        return features, labels, train_op, eval_metric_ops, loss, tp_op, tn_op, fp_op, fn_op
+
+    def process_x(self, raw_x_batch):
+        x_batch = raw_x_batch
+        x_batch = np.array(x_batch)
+        return x_batch
+
+    def process_y(self, raw_y_batch):
+        # y_batch = [int(e) for e in raw_y_batch]
+        # y_batch = [val_to_vec(self.num_classes, e) for e in y_batch]
+        # y_batch = np.array(y_batch)
+        y_batch = [one_hot(c, self.config.n_label) for c in raw_y_batch]
+        return y_batch

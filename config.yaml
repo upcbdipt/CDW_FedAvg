@@ -1,0 +1,54 @@
+# 运行时参数
+#===================================
+train: Train # 对每个工厂训练新的模型或者利用已有模型
+predict: Train # 生成新的预测，或者使用本地存储的预测
+use_id: "2020-01-08_09.32.00"
+random_seed: 0
+# 训练参数
+# ==================================
+batch_size: 200
+num_rounds: 100
+eval_every: 1
+clients_per_round: 4
+num_epochs: 40
+
+# 模型参数
+# ==================================
+lr: 0.005
+seq_len: 10
+num_class: 2
+#n_hidden: 200
+#n_dimension: 29
+n_dimension: 17
+n_label: 2
+len_out: 2
+n_hidden: 150
+
+# 其他
+# ==================================
+accuracy_key: 'accuracy'
+recall_key: 'recall'
+precision_key: 'precision'
+bytes_written_key: 'bytes_written'
+bytes_read_key: 'bytes_read'
+local_computations_key: 'local_computations'
+num_round_key: 'round_number'
+num_samples_key: 'num_samples'
+client_id_key: 'client_id'
+metrics_dir: 'metrics'
+metrics_name: 'metrics'
+# 可选择的模型
+random_forest: 'random_forest'
+decision_tree: 'decision_tree'
+isolation_forest: 'isolation_forest'
+k_neighbors: 'k_neighbors'
+LR: 'LR'
+Fed_LR: 'Fed_LR'
+svm: 'svm'
+Fed_SVM: 'Fed_SVM'
+LSTM: 'LSTM'
+Fed_LSTM: 'Fed_LSTM'
+AutoEncoder: 'AutoEncoder'
+Fed_AE: 'Fed_AE'
+NN: 'NN'
+Fed_NN: 'Fed_NN'
