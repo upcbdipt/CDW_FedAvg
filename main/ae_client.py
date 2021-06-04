@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 
 # @Time  : 2020/1/14 下午8:51
-# @Author : fl
-# @Project : HaierDataMining
-# @FileName: client
+# @Author : upcbdipt
+# @Project : CDW_FedAvg
+# @FileName: ae_client
 
 import random
 import warnings
-import numpy as np
 
 
 class Client:
@@ -25,7 +24,7 @@ class Client:
         self.eval_data = eval_data
 
     def train(self, num_epochs=1, batch_size=10, minibatch=None):
-        """使用训练数据来训练自己的模型.
+        """Trains on self.model using the client's train_data.
 
         Args:
             num_epochs: Number of epochs to train. Unsupported if minibatch is provided (minibatch has only 1 epoch)
@@ -54,7 +53,7 @@ class Client:
         return comp, num_train_samples, update
 
     def test(self, set_to_use='test'):
-        """使用测试数据来测试模型.
+        """Tests self.model on self.test_data.
 
         Args:
             set_to_use. Set to test on. Should be in ['train', 'test'].
@@ -71,7 +70,7 @@ class Client:
 
     @property
     def num_test_samples(self):
-        """客户端的测试数据量.
+        """Number of test samples for this client.
 
         Return:
             int: Number of test samples for this client
@@ -82,7 +81,7 @@ class Client:
 
     @property
     def num_train_samples(self):
-        """客户端的训练数据量.
+        """Number of train samples for this client.
 
         Return:
             int: Number of train samples for this client
@@ -93,7 +92,7 @@ class Client:
 
     @property
     def num_samples(self):
-        """客户端的总数据量.
+        """Number samples for this client.
 
         Return:
             int: Number of samples for this client
@@ -109,7 +108,7 @@ class Client:
 
     @property
     def model(self):
-        """返回客户端的训练模型"""
+        """Returns this client reference to model being trained"""
         return self._model
 
     @model.setter

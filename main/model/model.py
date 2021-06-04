@@ -1,21 +1,16 @@
 # -*- coding: utf-8 -*-
 
 # @Time  : 2020/1/14 下午4:23
-# @Author : fl
-# @Project : HaierDataMining
+# @Author : updbdipt
+# @Project : CDW_FedAvg
 # @FileName: model
 
 from abc import ABC, abstractmethod
 import numpy as np
 import tensorflow as tf
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier, IsolationForest
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import SVC
-from haier_data_mining.utils.model_utils import batch_data
-from haier_data_mining.utils.tf_utils import graph_size
-from haier_data_mining.model.KNN import KNN
+
+from main.utils.model_utils import batch_data
+from main.utils.tf_utils import graph_size
 
 
 class Model(ABC):
@@ -65,7 +60,7 @@ class Model(ABC):
 
     @abstractmethod
     def create_model(self):
-        """创建模型.
+        """Creates the model for the task.
 
         Returns:
             A 4-tuple consisting of:
@@ -80,7 +75,7 @@ class Model(ABC):
 
     def train(self, data, num_epochs=1, batch_size=10):
         """
-        训练模型
+        Trains the client model.
 
         Args:
             data: Dict of the form {'x': [list], 'y': [list]}.
@@ -113,7 +108,7 @@ class Model(ABC):
 
     def test(self, data):
         """
-        在给定数据上测试模型.
+        Tests the current model on the given data.
 
         Args:
             data: dict of the form {'x': [list], 'y': [list]}
@@ -188,66 +183,3 @@ class ServerModel:
         self.model.close()
 
 
-class BaseModel:
-    def __init__(self, config):
-        self._config = config
-        self._name = None
-        self._model = None
-
-    @property
-    def name(self):
-        return self._name
-
-    @name.setter
-    def name(self, name):
-        self._name = name
-
-    @property
-    def model(self):
-        return self._model
-
-    @model.setter
-    def model(self, model):
-        self._model = model
-
-
-class LogisticRegressionModel(BaseModel):
-    def __init__(self, config):
-        super().__init__(config)
-        self.name = config.LR
-        self.model = LogisticRegression()
-
-
-class RandomForestModel(BaseModel):
-    def __init__(self, config):
-        super().__init__(config)
-        self.name = config.random_forest
-        self.model = RandomForestClassifier()
-
-
-class DecisionTreeModel(BaseModel):
-    def __init__(self, config):
-        super().__init__(config)
-        self.name = config.decision_tree
-        self.model = DecisionTreeClassifier()
-
-
-class IsolationForestModel(BaseModel):
-    def __init__(self, config):
-        super().__init__(config)
-        self.name = config.isolation_forest
-        self.model = IsolationForest()
-
-
-class KNeighborsModel(BaseModel):
-    def __init__(self, config):
-        super().__init__(config)
-        self.name = config.k_neighbors
-        self.model = KNeighborsClassifier(n_neighbors=100)
-
-
-class SVMModel(BaseModel):
-    def __init__(self, config):
-        super().__init__(config)
-        self.name = config.svm
-        self.model = SVC(kernel='rbf', class_weight='balanced')

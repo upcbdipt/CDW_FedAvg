@@ -1,17 +1,15 @@
 # -*- coding: utf-8 -*-
 
 # @Time  : 2020/1/14 下午8:04
-# @Author : fl
-# @Project : HaierDataMining
+# @Author : updbdipt
+# @Project : CDW_FedAvg
 # @FileName: lstm
 
 import numpy as np
-import os
-import sys
 import tensorflow as tf
 import tensorflow.nn.rnn_cell as rnn
 
-from haier_data_mining.model.model import Model
+from main.model.model import Model
 
 
 class LSTMModel(Model):
@@ -46,9 +44,6 @@ class LSTMModel(Model):
         return x_batch
 
     def process_y(self, raw_y_batch):
-        # y_batch = [int(e) for e in raw_y_batch]
-        # y_batch = [val_to_vec(self.num_classes, e) for e in y_batch]
-        # y_batch = np.array(y_batch)
         y_batch = raw_y_batch
         y_batch = np.array(y_batch)
         return y_batch

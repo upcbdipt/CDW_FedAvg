@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+
+# @Time  : 2020/1/14 下午8:04
+# @Author : upcbdipt
+# @Project : CDW_FedAvg
+# @FileName: writer
 """Writes the given metrics in a csv."""
 
 import numpy as np
@@ -5,12 +11,12 @@ import os
 import pandas as pd
 import sys
 
-from haier_data_mining.utils.helpers import Config
+from main.utils.helpers import Config
+
 models_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(models_dir)
 
 config = Config('config.yaml')
-
 
 COLUMN_NAMES = [
     config.client_id_key, config.num_round_key, config.num_samples_key, 'set']
@@ -23,7 +29,7 @@ def print_metrics(
         hierarchies,
         num_samples,
         partition,
-        metrics_dir, 
+        metrics_dir,
         metrics_name):
     """Prints or appends the given metrics in a csv.
 
@@ -87,5 +93,3 @@ def get_metrics_names(metrics):
         return []
     metrics_dict = next(iter(metrics.values()))
     return list(metrics_dict.keys())
-
-

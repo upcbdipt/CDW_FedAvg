@@ -1,4 +1,10 @@
-import json
+# -*- coding: utf-8 -*-
+
+# @Time  : 2020/1/7 晚上10:00
+# @Author : upcbdipt
+# @Project : CDW_FedAvg
+# @FileName: model_utils
+
 import numpy as np
 import os
 from collections import defaultdict
@@ -42,6 +48,7 @@ def read_dir(data_dir):
         print(x.shape)
         print(y.shape)
         factory_name = f.split('.')[0]
+        print(factory_name)
         clients.append(factory_name)
         groups.append(factory_name)
         temp = dict()
@@ -53,7 +60,7 @@ def read_dir(data_dir):
 
 
 def read_data(train_data_dir, test_data_dir):
-    """从训练/测试数据文件夹中读取数据
+    """parses data in given train and test data directories
 
     assumes:
     - the data in the input directories are .json files with

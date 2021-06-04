@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
 
 # @Time  : 2020/1/14 下午8:04
-# @Author : fl
-# @Project : HaierDataMining
-# @FileName: lstm
+# @Author : upcbdipt
+# @Project : CDW_FedAvg
+# @FileName: autoencoder
 
 import numpy as np
 import tensorflow as tf
-import tensorflow.nn.rnn_cell as rnn
 
-from haier_data_mining.model.model_ae import Model
-from haier_data_mining.utils.model_utils import one_hot
+from main.model.model_ae import Model
+from main.utils.model_utils import one_hot
 
 
 class AutoEncoderModel(Model):
@@ -35,7 +34,6 @@ class AutoEncoderModel(Model):
         encoder = self.encoder_op(features)
         pred = self.decoder_op(encoder)
 
-        # 均方差损失函数
         loss = tf.reduce_mean(tf.square(pred - features))
 
         train_op = self.optimizer.minimize(
@@ -50,8 +48,5 @@ class AutoEncoderModel(Model):
         return x_batch
 
     def process_y(self, raw_y_batch):
-        # y_batch = [int(e) for e in raw_y_batch]
-        # y_batch = [val_to_vec(self.num_classes, e) for e in y_batch]
-        # y_batch = np.array(y_batch)
         y_batch = [one_hot(c, self.config.n_label) for c in raw_y_batch]
         return y_batch

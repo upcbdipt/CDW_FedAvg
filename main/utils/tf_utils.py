@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+
+# @Time  : 2020/1/7 晚上10:00
+# @Author : upcbdipt
+# @Project : CDW_FedAvg
+# @FileName: tf_utils
+
 import tensorflow as tf
 
 

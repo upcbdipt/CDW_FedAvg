@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 
 # @Time  : 2020/1/14 下午8:51
-# @Author : fl
-# @Project : HaierDataMining
+# @Author : upcbdipt
+# @Project : CDW_FedAvg
 # @FileName: client
 
 import random
 import warnings
 import numpy as np
-import scipy.stats as stats
 
 
 class Client:
@@ -27,7 +26,7 @@ class Client:
         self.centroid_dist = self.calculate_centroid_dist()
 
     def train(self, num_epochs=1, batch_size=10, minibatch=None):
-        """使用训练数据来训练自己的模型.
+        """Trains on self.model using the client's train_data.
 
         Args:
             num_epochs: Number of epochs to train. Unsupported if minibatch is provided (minibatch has only 1 epoch)
@@ -56,7 +55,7 @@ class Client:
         return comp, num_train_samples, update
 
     def test(self, set_to_use='test'):
-        """使用测试数据来测试模型.
+        """Tests self.model on self.test_data.
 
         Args:
             set_to_use. Set to test on. Should be in ['train', 'test'].
@@ -72,7 +71,7 @@ class Client:
 
     @property
     def num_test_samples(self):
-        """客户端的测试数据量.
+        """Number of test samples for this client.
 
         Return:
             int: Number of test samples for this client
@@ -83,7 +82,7 @@ class Client:
 
     @property
     def num_train_samples(self):
-        """客户端的训练数据量.
+        """Number of train samples for this client.
 
         Return:
             int: Number of train samples for this client
@@ -94,7 +93,7 @@ class Client:
 
     @property
     def num_samples(self):
-        """客户端的总数据量.
+        """Number samples for this client.
 
         Return:
             int: Number of samples for this client
@@ -110,24 +109,24 @@ class Client:
 
     @property
     def model(self):
-        """返回客户端的训练模型"""
+        """Returns this client reference to model being trained"""
         return self._model
 
     @model.setter
     def model(self, model):
-        warnings.warn('The current implementation shares the model among all clients.'
+        warnings.warn('The current implementatio n shares the model among all clients.'
                       'Setting it on one client will effectively modify all clients.')
         self._model = model
 
     def calculate_centroid_dist(self):
         data = np.hstack((self.train_data['x'], self.train_data['y']))
-        # 正常点跟异常点
+        # normal data and abnormal data
         pos = data[data[:, -1] == 0]
         neg = data[data[:, -1] == 1]
-        # 两类的质心
+        # the centroid of them
         pos_centroid = np.mean(pos, 0)
-        neg_centorid = np.mean(neg, 0)
-        # 计算质心的距离
-        dist = np.linalg.norm(pos_centroid-neg_centorid)
+        neg_centroid = np.mean(neg, 0)
+        # calculate the distance of their centroid
+        dist = np.linalg.norm(pos_centroid-neg_centroid)
         print(self.id, dist)
         return dist

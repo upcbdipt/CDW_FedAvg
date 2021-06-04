@@ -1,21 +1,16 @@
 # -*- coding: utf-8 -*-
 
 # @Time  : 2020/1/14 下午4:23
-# @Author : fl
-# @Project : HaierDataMining
-# @FileName: model
+# @Author : updbdipt
+# @Project : CDW_FedAvg
+# @FileName: model_ae
 
 from abc import ABC, abstractmethod
 import numpy as np
 import tensorflow as tf
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier, IsolationForest
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import SVC
-from haier_data_mining.utils.model_utils import batch_data
-from haier_data_mining.utils.tf_utils import graph_size
-from haier_data_mining.model.KNN import KNN
+
+from main.utils.model_utils import batch_data
+from main.utils.tf_utils import graph_size
 
 
 class Model(ABC):
@@ -66,7 +61,7 @@ class Model(ABC):
 
     @abstractmethod
     def create_model(self):
-        """创建模型.
+        """"Creates the model for the task.
 
         Returns:
             A 4-tuple consisting of:
@@ -81,7 +76,7 @@ class Model(ABC):
 
     def train(self, data, num_epochs=1, batch_size=10):
         """
-        训练模型
+        Trains the client model.
 
         Args:
             data: Dict of the form {'x': [list], 'y': [list]}.
@@ -106,11 +101,6 @@ class Model(ABC):
             target_data = self.process_y(batched_y)
 
             with self.graph.as_default():
-                # self.sess.run(self.train_op,
-                #               feed_dict={
-                #                   self.features: input_data,
-                #                   self.labels: target_data
-                #               })
                 self.sess.run(self.train_op,
                               feed_dict={
                                   self.features: input_data
@@ -118,7 +108,7 @@ class Model(ABC):
 
     def test(self, data):
         """
-        在给定数据上测试模型.
+        Tests the current model on the given data.
 
         Args:
             data: dict of the form {'x': [list], 'y': [list]}
@@ -128,22 +118,12 @@ class Model(ABC):
         x_vecs = self.process_x(data['x'])
         labels = self.process_y(data['y'])
         with self.graph.as_default():
-            # tp, tn, fp, fn, tot_acc, loss = self.sess.run(
-            #     [self.tp_op, self.tn_op, self.fp_op, self.fn_op, self.eval_metric_ops, self.loss],
-            #     feed_dict={self.features: x_vecs, self.labels: labels}
-            # )
+
             encoder, loss = self.sess.run(
                 [self.encoder, self.loss],
                 feed_dict={self.features: x_vecs}
             )
-        # tpr = float(tp) / (float(tp) + float(fn))
-        # fpr = float(fp) / (float(fp) + float(tn))
-        # fnr = float(fn) / (float(tp) + float(fn))
-        # recall = tpr
-        # precision = float(tp) / (float(tp) + float(fp))
-        # acc = float(tot_acc) / x_vecs.shape[0]
-        # return {self.config.accuracy_key: acc, 'loss': loss, 'tp': tp, 'tn': tn, 'fp': fp, 'fn': fn,
-        #         'precision': precision, 'recall': recall}
+
         return encoder, {'loss': loss}
 
     def close(self):
@@ -160,103 +140,3 @@ class Model(ABC):
         pass
 
 
-class ServerModel:
-    def __init__(self, model):
-        self.model = model
-
-    @property
-    def size(self):
-        return self.model.size
-
-    @property
-    def cur_model(self):
-        return self.model
-
-    def send_to(self, clients):
-        """Copies server model variables to each of the given clients
-
-        Args:
-            clients: list of Client objects
-        """
-        var_vals = {}
-        with self.model.graph.as_default():
-            all_vars = tf.trainable_variables()
-            for v in all_vars:
-                val = self.model.sess.run(v)
-                var_vals[v.name] = val
-        for c in clients:
-            with c.model.graph.as_default():
-                all_vars = tf.trainable_variables()
-                for v in all_vars:
-                    v.load(var_vals[v.name], c.model.sess)
-
-    def save(self, path='checkpoints/model.ckpt'):
-        return self.model.saver.save(self.model.sess, path)
-
-    def close(self):
-        self.model.close()
-
-
-class BaseModel:
-    def __init__(self, config):
-        self._config = config
-        self._name = None
-        self._model = None
-
-    @property
-    def name(self):
-        return self._name
-
-    @name.setter
-    def name(self, name):
-        self._name = name
-
-    @property
-    def model(self):
-        return self._model
-
-    @model.setter
-    def model(self, model):
-        self._model = model
-
-
-class LogisticRegressionModel(BaseModel):
-    def __init__(self, config):
-        super().__init__(config)
-        self.name = config.LR
-        self.model = LogisticRegression()
-
-
-class RandomForestModel(BaseModel):
-    def __init__(self, config):
-        super().__init__(config)
-        self.name = config.random_forest
-        self.model = RandomForestClassifier()
-
-
-class DecisionTreeModel(BaseModel):
-    def __init__(self, config):
-        super().__init__(config)
-        self.name = config.decision_tree
-        self.model = DecisionTreeClassifier()
-
-
-class IsolationForestModel(BaseModel):
-    def __init__(self, config):
-        super().__init__(config)
-        self.name = config.isolation_forest
-        self.model = IsolationForest()
-
-
-class KNeighborsModel(BaseModel):
-    def __init__(self, config):
-        super().__init__(config)
-        self.name = config.k_neighbors
-        self.model = KNeighborsClassifier(n_neighbors=100)
-
-
-class SVMModel(BaseModel):
-    def __init__(self, config):
-        super().__init__(config)
-        self.name = config.svm
-        self.model = SVC(kernel='rbf', class_weight='balanced')

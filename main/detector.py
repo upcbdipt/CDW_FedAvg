@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 # @Time  : 2020/1/7 晚上10:00
-# @Author : fl
-# @Project : HaierDataMining
-# @FileName: detector.py
+# @Author : upcbdipt
+# @Project : CDW_FedAvg
+# @FileName: detector
 
 import os
 import numpy as np
@@ -11,13 +11,13 @@ import random
 import tensorflow as tf
 import time
 
-from haier_data_mining.client import Client
-from haier_data_mining.server import Server
-from haier_data_mining.model.lstm import LSTMModel
-from haier_data_mining.model.neural_networks import NeuralNetworksModel
-from haier_data_mining.model.logistic_regression import LRModel
-import haier_data_mining.metrics.writer as metrics_writer
-from haier_data_mining.utils.model_utils import read_data
+from main.client import Client
+from main.server import Server
+from main.model.lstm import LSTMModel
+from main.model.neural_networks import NeuralNetworksModel
+from main.model.logistic_regression import LRModel
+import main.metrics.writer as metrics_writer
+from main.utils.model_utils import read_data
 
 STAT_METRICS_PATH = 'metrics/stat_metrics.csv'
 SYS_METRICS_PATH = 'metrics/sys_metrics.csv'
@@ -26,9 +26,9 @@ SYS_METRICS_PATH = 'metrics/sys_metrics.csv'
 class Detector:
     def __init__(self, config, details=False):
         """
-        针对空调设备故障检测的顶级类
+        Top-level class for running anomaly detection over a group of clients
         Args:
-            config_path(str): 配置文件
+            config(Config): config class
 
         """
 
@@ -36,13 +36,12 @@ class Detector:
 
     def run(self, model_type='NN'):
         random_seed = self.config.random_seed
-        # 设置随机数种子
+        # random seed
         random.seed(1 + random_seed)
         np.random.seed(12 + random_seed)
         tf.set_random_seed(123 + random_seed)
-        # 屏蔽tf警告
         tf.logging.set_verbosity(tf.logging.WARN)
-        # 加载模型
+        # load model
         lr = self.config.lr
         seq_len = self.config.seq_len
         num_class = self.config.num_class
@@ -57,18 +56,17 @@ class Detector:
         elif model_type == self.config.LR or model_type == self.config.Fed_LR:
             client_model = LRModel(config=self.config, seed=random_seed, lr=lr)
         else:
-            print('输入模型类型不存在，进程结束')
+            print('the type of model is not exist')
             return
-            # 创建服务器
+        # To creat a server
         server = Server(self.config, client_model)
-        # 创建客户端
-        # 每一个工厂一个客户端
+        # To creat clients
         clients = setup_clients(self.config, model_type, client_model)
         client_ids, client_groups, client_num_samples = server.get_clients_info(clients)
         print('Clients in Total: %d' % len(clients))
-        # 初始化状态
+        # Initialization
         print('--- Random Initialization ---')
-        # 用来保存状态
+        # To save state
         stat_writer_fn = get_stat_writer_function(client_ids, client_groups, client_num_samples, self.config)
         sys_writer_fn = get_sys_writer_function(self.config)
         print_stats(0, server, clients, client_num_samples, stat_writer_fn)
@@ -77,11 +75,11 @@ class Detector:
         clients_per_round = self.config.clients_per_round
         num_epochs = self.config.num_epochs
         batch_size = self.config.batch_size
-        # 模拟训练
+        # Training
         for i in range(num_rounds):
             print('--- Round %d of %d: Training %d Clients ---' % (i + 1, num_rounds, clients_per_round))
 
-            # 当前轮选择的客户端
+            # To choose clients
             server.select_clients(i, online(clients), num_clients=clients_per_round)
             c_ids, c_groups, c_num_samples = server.get_clients_info(server.selected_clients)
 
@@ -90,7 +88,7 @@ class Detector:
                                              minibatch=None)
             sys_writer_fn(i + 1, c_ids, sys_metrics, c_groups, c_num_samples)
 
-            # 更新server模型
+            # update server model
             server.update_model()
 
             # Test model
@@ -107,9 +105,9 @@ class Detector:
         server.close_model()
 
 
-# 这里可以对客户端的状态进行设置，模拟各种不在线情况
+
 def online(clients):
-    """假设所有用户都在线"""
+    """We assume all users are always online."""
     return clients
 
 
@@ -121,7 +119,7 @@ def create_clients(users, groups, train_data, test_data, model):
 
 
 def setup_clients(config, model_type=None, model=None):
-    """基于给定的训练数据文件夹和测试数据文件夹
+    """Instantiates clients based on given train and test data directories
 
     Return:
         all_clients: list of Client objects.
@@ -159,7 +157,7 @@ def get_sys_writer_function(config):
 
 def print_stats(
         num_round, server, clients, num_samples, writer, use_val_set=False):
-    train_stat_metrics = server.test_model(clients, set_to_use='train')  # 每一个客户端的loss
+    train_stat_metrics = server.test_model(clients, set_to_use='train')
     print_metrics(train_stat_metrics, num_samples, prefix='train_')
     writer(num_round, train_stat_metrics, 'train')
 

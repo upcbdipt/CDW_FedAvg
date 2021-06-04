@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 
 # @Time  : 2020/1/14 下午8:04
-# @Author : fl
-# @Project : HaierDataMining
-# @FileName: lstm
+# @Author : updbdipt
+# @Project : CDW_FedAvg
+# @FileName: logistic_regression
 
 import numpy as np
 
 import tensorflow as tf
 import tensorflow.nn.rnn_cell as rnn
 
-from haier_data_mining.model.model import Model
-from haier_data_mining.utils.model_utils import one_hot
+from main.model.model import Model
+from main.utils.model_utils import one_hot
 
 
 class LRModel(Model):
@@ -23,7 +23,6 @@ class LRModel(Model):
         labels = tf.placeholder(dtype=tf.float32, shape=[None, self.config.n_label], name='labels')
         hidden1 = tf.layers.dense(inputs=features, units=self.config.n_label)
         pred = tf.nn.softmax(hidden1)
-        # 交叉熵损失函数
         loss = tf.reduce_mean(
             tf.nn.softmax_cross_entropy_with_logits_v2(logits=pred, labels=labels))
         train_op = self.optimizer.minimize(
@@ -88,8 +87,5 @@ class LRModel(Model):
         return x_batch
 
     def process_y(self, raw_y_batch):
-        # y_batch = [int(e) for e in raw_y_batch]
-        # y_batch = [val_to_vec(self.num_classes, e) for e in y_batch]
-        # y_batch = np.array(y_batch)
         y_batch = [one_hot(c, self.config.n_label) for c in raw_y_batch]
         return y_batch

@@ -1,12 +1,19 @@
+# -*- coding: utf-8 -*-
+
+# @Time  : 2020/1/14 上午10:30
+# @Author : upcbdipt
+# @Project : CDW_FedAvg
+# @FileName: reduce_dimension
+
 import os
 import numpy as np
 import random
 import tensorflow as tf
 
-from haier_data_mining.model.autoencoder import AutoEncoderModel
-import haier_data_mining.metrics.writer as metrics_writer
-from haier_data_mining.utils.model_utils import read_data
-from haier_data_mining.ae_client import Client
+from main.model.autoencoder import AutoEncoderModel
+import main.metrics.writer as metrics_writer
+from main.utils.model_utils import read_data
+from main.ae_client import Client
 
 
 class ReduceDimension:
@@ -15,24 +22,16 @@ class ReduceDimension:
 
     def run(self):
         random_seed = self.config.random_seed
-        # 设置随机数种子
         random.seed(1 + random_seed)
         np.random.seed(12 + random_seed)
         tf.set_random_seed(123 + random_seed)
-        # 屏蔽tf警告
         tf.logging.set_verbosity(tf.logging.WARN)
-        # 加载模型
+        # load model
         lr = self.config.lr
         n_hidden = self.config.n_hidden
         tf.reset_default_graph()
-        client_model1 = AutoEncoderModel(config=self. -config, seed=random_seed, lr=lr, n_hidden=n_hidden)
-        client_model2 = AutoEncoderModel(config=self.config, seed=random_seed, lr=lr, n_hidden=n_hidden)
-        client_model3 = AutoEncoderModel(config=self.config, seed=random_seed, lr=lr, n_hidden=n_hidden)
-        client_model4 = AutoEncoderModel(config=self.config, seed=random_seed, lr=lr, n_hidden=n_hidden)
-        client_model5 = AutoEncoderModel(config=self.config, seed=random_seed, lr=lr, n_hidden=n_hidden)
-        client_model6 = AutoEncoderModel(config=self.config, seed=random_seed, lr=lr, n_hidden=n_hidden)
-        client_models = [client_model1, client_model2, client_model3, client_model4, client_model5, client_model6]
-        # 准备客户端
+
+        # client
         train_data_dir = os.path.join('data', 'train')
         test_data_dir = os.path.join('data', 'test')
         users, groups, train_data, test_data = read_data(train_data_dir, test_data_dir)
@@ -41,13 +40,14 @@ class ReduceDimension:
         clients = []
         i = 0
         for u, g in zip(users, groups):
-            clients.append(Client(u, g, train_data[u], test_data[u], client_models[i]))
+            client_model = AutoEncoderModel(config=self.config, seed=random_seed, lr=lr, n_hidden=n_hidden)
+            clients.append(Client(u, g, train_data[u], test_data[u], client_model))
             i += 1
         client_ids, client_groups, client_num_samples = get_clients_info(clients)
         print('Clients in Total: %d' % len(clients))
-        # 初始化状态
+        # Initialization
         print('--- Random Initialization ---')
-        # 用来保存状态
+        # save state
         stat_writer_fn = get_stat_writer_function(client_ids, client_groups, client_num_samples, self.config)
         sys_writer_fn = get_sys_writer_function(self.config)
         print_stats(0, clients, client_num_samples, stat_writer_fn)
@@ -56,11 +56,11 @@ class ReduceDimension:
         clients_per_round = self.config.clients_per_round
         num_epochs = self.config.num_epochs
         batch_size = self.config.batch_size
-        # 模拟训练
+        # training
         for i in range(num_rounds):
             print('--- Round %d of %d: Training %d Clients ---' % (i + 1, num_rounds, clients_per_round))
 
-            # 当前轮选择的客户端
+            # Choose client
             client_ids, client_groups, client_num_samples = get_clients_info(clients)
 
             # Simulate server model training on selected clients' data
@@ -73,11 +73,11 @@ class ReduceDimension:
                 print_stats(i + 1, clients, client_num_samples, stat_writer_fn)
         encoders, _ = test_model(clients, 'test')
         for client in clients:
-            print(encoders[client.id].shape)
-            np.save(os.path.join('data', 'reduce', str(client.id + '.npy')), encoders[client.id])
-
-        for client in client_models:
-            client.close()
+            reduce_path = os.path.join('data', 'reduce')
+            if not os.path.exists(reduce_path):
+                os.makedirs(reduce_path)
+            np.save(os.path.join(reduce_path, str(client.id + '.npy')), encoders[client.id])
+            client.model.close()
 
 
 def train_model(config, num_epochs=1, batch_size=10, minibatch=None, clients=None):
@@ -86,7 +86,7 @@ def train_model(config, num_epochs=1, batch_size=10, minibatch=None, clients=Non
                config.bytes_read_key: 0,
                config.local_computations_key: 0} for c in clients}
     for c in clients:
-        # 每个客户端进行训练
+        # train
         comp, num_samples, update = c.train(num_epochs, batch_size, minibatch)
         sys_metrics[c.id][config.bytes_read_key] += c.model.size
         sys_metrics[c.id][config.bytes_written_key] += c.model.size
@@ -95,12 +95,12 @@ def train_model(config, num_epochs=1, batch_size=10, minibatch=None, clients=Non
 
 
 def get_clients_info(clients):
-    """对给定的客户端返回id,hierarchies 和 num_samples
+    """Returns the ids, hierarchies and num_samples for the given clients.
 
-     如果 clients=None，返回self.selected_clients的信息
+     Returns info about self.selected_clients if clients=None;
 
     Args:
-        clients: 客户端对象列表
+        clients: list of Client objects.
     """
 
     ids = [c.id for c in clients]
@@ -140,11 +140,12 @@ def print_stats(
 
 
 def test_model(clients_to_test, set_to_use='test'):
-    """对给定的客户端测试其模型，如果clients_to_test =None就用self.selected_clients来测试模型
+    """Tests self.model on given clients.
+    Tests model on self.selected_clients if clients_to_test=None.
 
     Args:
-        clients_to_test: 客户端对象列表
-        set_to_use: 用来测试的数据集.  ['train', 'test']二者之一.
+        clients_to_test: list of Client objects.
+        set_to_use: dataset to test on. Should be in ['train', 'test'].
     """
     metrics = {}
     encoders = {}

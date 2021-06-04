@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 # @Time  : 2020/1/7 晚上10:00
-# @Author : fl
-# @Project : HaierDataMining
-# @FileName: helpers.py
+# @Author : upcbdipt
+# @Project : CDW_FedAvg
+# @FileName: helpers
 
 import logging
 import yaml
@@ -11,12 +11,12 @@ import json
 import sys
 import os
 
-logger = logging.getLogger('haier')
-sys.path.append('../haier_data_mining')
+logger = logging.getLogger('CDW_FedAvg')
+sys.path.append('../CDW_FedAvg')
 
 
 class Config:
-    """从config.yaml加载全局变量
+    """load params from config.yaml
 
     """
 
@@ -52,38 +52,3 @@ class Config:
         return channel_group_lookup
 
 
-def make_dirs(_id):
-    """根据时间id创建存储数据文件夹
-
-    """
-
-    config = Config("config.yaml")
-
-    if not config.train or not config.predict:
-        if not os.path.isdir('data/%s' % config.use_id):
-            raise ValueError(
-                "Run ID {} is not valid. If loading prior models or predictions, must provide valid ID.".format(_id))
-
-    paths = ['data', 'data/%s' % _id, 'data/logs', 'data/%s/models' % _id, 'data/%s/smoothed_errors' % _id,
-             'data/%s/y_hat' % _id]
-
-    for p in paths:
-        if not os.path.isdir(p):
-            os.mkdir(p)
-
-
-def setup_logging():
-    """配置日志参数跟踪参数设置、训练和评估
-
-    Returns:
-        logger (obj): 日志对象
-    """
-
-    logger = logging.getLogger('haier')
-    logger.setLevel(logging.INFO)
-
-    stdout = logging.StreamHandler(sys.stdout)
-    stdout.setLevel(logging.INFO)
-    logger.addHandler(stdout)
-
-    return logger
