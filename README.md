@@ -28,7 +28,8 @@ python 3_plot.py
 ```
 ## Citation
 If you use this work, please cite:
-``` @ARTICLE{9233457,
+``` 
+  @ARTICLE{9233457,
   author={Zhang, Weishan and Lu, Qinghua and Yu, Qiuyu and Li, Zhaotong and Liu, Yue and Lo, Sin Kit and Chen, Shiping and Xu, Xiwei and Zhu, Liming},
   journal={IEEE Internet of Things Journal}, 
   title={Blockchain-Based Federated Learning for Device Failure Detection in Industrial IoT}, 
