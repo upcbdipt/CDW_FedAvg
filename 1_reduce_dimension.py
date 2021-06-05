@@ -3,7 +3,7 @@
 # @Time  : 2021/6/4 上午11:41
 # @Author : upcbdipt
 # @Project : CDW_FedAvg
-# @FileName: 2_plot
+# @FileName: 1_plot
 
 from main.reduce_dimension import ReduceDimension
 from main.utils.helpers import Config

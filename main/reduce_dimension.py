@@ -49,7 +49,6 @@ class ReduceDimension:
         print('--- Random Initialization ---')
         # save state
         stat_writer_fn = get_stat_writer_function(client_ids, client_groups, client_num_samples, self.config)
-        sys_writer_fn = get_sys_writer_function(self.config)
         print_stats(0, clients, client_num_samples, stat_writer_fn)
         num_rounds = self.config.num_rounds
         eval_every = self.config.eval_every
@@ -64,9 +63,8 @@ class ReduceDimension:
             client_ids, client_groups, client_num_samples = get_clients_info(clients)
 
             # Simulate server model training on selected clients' data
-            sys_metrics = train_model(config=self.config, num_epochs=num_epochs, batch_size=batch_size,
+            train_model(config=self.config, num_epochs=num_epochs, batch_size=batch_size,
                                       minibatch=None, clients=clients)
-            sys_writer_fn(i + 1, client_ids, sys_metrics, client_groups, client_num_samples)
 
             # Test model
             if (i + 1) % eval_every == 0 or (i + 1) == num_rounds:
@@ -112,19 +110,11 @@ def get_clients_info(clients):
 def get_stat_writer_function(ids, groups, num_samples, config):
     def writer_fn(num_round, metrics, partition):
         metrics_writer.print_metrics(
-            num_round, ids, metrics, groups, num_samples, partition, config.metrics_dir,
-            '{}_{}'.format(config.metrics_name, 'stat'))
+            num_round, ids, metrics, groups, num_samples, partition, config.reduce_dimension_metrics_dir,
+            '{}_{}'.format(config.reduce_dimension_metrics_name, 'stat'))
 
     return writer_fn
 
-
-def get_sys_writer_function(config):
-    def writer_fn(num_round, ids, metrics, groups, num_samples):
-        metrics_writer.print_metrics(
-            num_round, ids, metrics, groups, num_samples, 'train', config.metrics_dir,
-            '{}_{}'.format(config.metrics_name, 'sys'))
-
-    return writer_fn
 
 
 def print_stats(

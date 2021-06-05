@@ -9,12 +9,8 @@ import matplotlib.pyplot as plt
 import os
 import numpy as np
 
-from scipy.spatial import distance
 
-path = os.path.join('..', 'results')
-
-
-def plot(client):
+def plot_train_data(client):
     feature_path = os.path.join('data', 'reduce', client + '.npy')
     target_path = os.path.join('data', 'test', client + '.npy')
     save_path = os.path.join('results', client + '.pdf')

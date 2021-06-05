@@ -7,7 +7,7 @@
 
 import os
 
-from main.ploting import plot
+from main.ploting import plot_train_data
 
 if __name__ == '__main__':
     data_dir = os.path.join('data', 'train')
@@ -15,4 +15,4 @@ if __name__ == '__main__':
     files = [f for f in files if f.endswith('.npy')]
     for f in files:
         factory_name = f.split('.')[0]
-        plot(factory_name)
+        plot_train_data(factory_name)

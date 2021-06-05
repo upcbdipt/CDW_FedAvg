@@ -3,7 +3,7 @@
 # @Time  : 2020/1/11 上午9:12
 # @Author : upcbdipt
 # @Project : CDW_FedAvg
-# @FileName: 1_run
+# @FileName: 2_run
 
 from main.detector import Detector
 from main.utils.helpers import Config
